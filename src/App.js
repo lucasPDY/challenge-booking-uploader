@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Dropzone from 'react-dropzone';
 import './App.css';
+import Papa from 'papaparse';
 
 const apiUrl = 'http://localhost:3001'
 
@@ -18,6 +19,13 @@ class App extends Component {
 
   onDrop(files) {
     console.log(files);
+    Papa.parse(files[0], {
+      complete: (result) => {
+        console.log(result)
+      },
+      header: true,
+      delimiter: ", ",
+    });
   }
 
   render() {
