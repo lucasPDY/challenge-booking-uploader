@@ -16,4 +16,4 @@ app.get('/bookings', (_, res) => {
   res.json(bookings);
 });
 
-app.listen(3001);
+app.listen(3004);
