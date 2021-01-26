@@ -21,11 +21,11 @@ class App extends Component {
       .then((response) => response.json())
       .then((bookings) => {
         console.log("Bookings here \n", bookings);
-        this.setBookings(bookings, false);
+        this.addBookings(bookings, false);
       });
   }
 
-  setBookings = (bookings, isNew) => {
+  addBookings = (bookings, isNew) => {
     const newBookings = bookings.map((booking) => {
       const startDate = new Date(booking.time);
       const endDate = new Date(booking.time + booking.duration);
@@ -52,16 +52,18 @@ class App extends Component {
     );
   };
 
+  // Function that runs once Papaparse is finished parsing the CSV
   onComplete = ({ data, errors, meta }) => {
     if (errors.length > 0) {
       alert("Error parsing CSV. Please check and try again later.");
       return;
-    }
+	}
+	// TODO: Verify if bookings added have correct headers before adding to state
     console.log(meta);
     console.log(data);
     const bookings = parseBookings(data);
-    console.log(bookings);
-    this.setBookings(bookings, true);
+	console.log(bookings);
+    this.addBookings(bookings, true);
   };
 
   // Assumes uploaded CSV File does not contain any overlapping timeslots
@@ -76,7 +78,6 @@ class App extends Component {
   };
 
   onBookingUpdate = () => {
-    console.log("bookings updated");
     // Payload should include bookings that do not overlap
     const bookingsPayload = this.state.bookings
       .filter((booking) => {
@@ -90,7 +91,6 @@ class App extends Component {
         };
       });
 
-    console.log(bookingsPayload);
 
     // Simple POST request with a JSON body using fetch, taken from https://jasonwatmore.com/post/2020/02/01/react-fetch-http-post-request-examples
     const requestOptions = {
@@ -101,14 +101,16 @@ class App extends Component {
     fetch(`${apiUrl}/bookings`, requestOptions)
       .then((response) => response.json())
       .then((data) => {
+		// Reset bookings to default state before refreshing bookings from server
         this.setState({ bookings: [] });
-        this.setBookings(data, false);
+        this.addBookings(data, false);
       })
       .catch((error) => {
         alert(`Error processing bookings. Try again later.\n${error}`);
       });
   };
 
+  // Function that takes an event and returns a classname or style that will be applied to the event
   customEventPropGetter = (event) => {
     if (event.new && event.overlap) return { className: "rbc-event-overlap" };
     else if (event.new) return { className: "rbc-event-new" };
