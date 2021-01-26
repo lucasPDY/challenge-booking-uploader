@@ -72,6 +72,7 @@ class App extends Component {
     this.setBookings(bookings, true);
   };
 
+  // Assumes uploaded CSV File does not contain any overlapping timeslots
   onDrop = (files) => {
     console.log(files);
     Papa.parse(files[0], {
@@ -81,6 +82,10 @@ class App extends Component {
       skipEmptyLines: true,
     });
   };
+
+  onBookingUpdate = () => {
+    console.log("bookings updated")
+  }
 
   customEventPropGetter = (event) => {
     if (event.new && event.overlap) return { className: "rbc-event-overlap" };
@@ -97,7 +102,7 @@ class App extends Component {
           </Dropzone>
         </div>
         <div className="App-main">
-          <p>Uploaded bookings will be shown in the calendar. Invalid bookings will be shown in red.</p>
+          <p>Uploaded bookings will be shown in the calendar. Any new bookings that overlap with old bookings will be shown in red, and will not be saved.</p>
           <p><b>Existing bookings:</b></p>
           <Calendar
             localizer={localizer}
@@ -106,7 +111,7 @@ class App extends Component {
             defaultDate={startingDate}
             eventPropGetter={this.customEventPropGetter}
           />
-          <button onClick={this.onSave}>Upload Bookings</button>
+          <button className='booking-button' onClick={this.onBookingUpdate}>UPDATE</button>
         </div>
       </div>
     );

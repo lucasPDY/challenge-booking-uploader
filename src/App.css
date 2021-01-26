@@ -43,3 +43,12 @@
 .rbc-event-overlap {
   background-color: rgb(194, 34, 34) !important;
 }
+
+.booking-button {
+  color: white;
+  background-color: #265985;
+  border-radius: 5px;
+  margin: 1.5em;
+  padding: 1em;
+  border: 1px solid #265985;
+}
