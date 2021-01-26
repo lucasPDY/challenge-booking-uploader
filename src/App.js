@@ -57,23 +57,26 @@ class App extends Component {
     if (errors.length > 0) {
       alert("Error parsing CSV. Please check and try again later.");
       return;
-	}
-	// TODO: Verify if bookings added have correct headers before adding to state
+    }
+    // TODO: Verify if bookings added have correct headers before adding to state
     console.log(meta);
     console.log(data);
     const bookings = parseBookings(data);
-	console.log(bookings);
+    console.log(bookings);
     this.addBookings(bookings, true);
   };
 
   // Assumes uploaded CSV File does not contain any overlapping timeslots
+  // Also assumes upload CSV Files does not end on the next day
   onDrop = (files) => {
     console.log(files);
-    Papa.parse(files[0], {
-      complete: this.onComplete,
-      header: true,
-      delimiter: ", ",
-      skipEmptyLines: true,
+    files.forEach((file) => {
+      Papa.parse(file, {
+        complete: this.onComplete,
+        header: true,
+        delimiter: ", ",
+        skipEmptyLines: true,
+      });
     });
   };
 
@@ -91,7 +94,6 @@ class App extends Component {
         };
       });
 
-
     // Simple POST request with a JSON body using fetch, taken from https://jasonwatmore.com/post/2020/02/01/react-fetch-http-post-request-examples
     const requestOptions = {
       method: "POST",
@@ -101,7 +103,7 @@ class App extends Component {
     fetch(`${apiUrl}/bookings`, requestOptions)
       .then((response) => response.json())
       .then((data) => {
-		// Reset bookings to default state before refreshing bookings from server
+        // Reset bookings to default state before refreshing bookings from server
         this.setState({ bookings: [] });
         this.addBookings(data, false);
       })
