@@ -35,3 +35,11 @@
   display: inline-block;
   width: 80px;
 }
+
+.rbc-event-new {
+  background-color: #18a8b3 !important;
+}
+
+.rbc-event-overlap {
+  background-color: rgb(194, 34, 34) !important;
+}
