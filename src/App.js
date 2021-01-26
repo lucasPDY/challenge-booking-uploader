@@ -81,7 +81,7 @@ class App extends Component {
   };
 
   onBookingUpdate = () => {
-    // Payload should include bookings that do not overlap
+    // Payload should include bookings that do not overlap and are new
     const bookingsPayload = this.state.bookings
       .filter((booking) => {
         return !booking.overlap && booking.new;
@@ -139,9 +139,11 @@ class App extends Component {
           <Calendar
             localizer={localizer}
             events={this.state.bookings}
+            views={["day", "week"]}
             defaultView={Views.WEEK}
             defaultDate={startingDate}
             eventPropGetter={this.customEventPropGetter}
+            showMultiDayTimes={true}
           />
           <button className="booking-button" onClick={this.onBookingUpdate}>
             UPDATE
