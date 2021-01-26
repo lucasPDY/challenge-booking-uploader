@@ -7,6 +7,7 @@ import moment from "moment";
 
 import "./App.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { parseBookings } from "./util";
 
 const apiUrl = "http://localhost:3004";
 const localizer = momentLocalizer(moment);
@@ -20,21 +21,11 @@ class App extends Component {
       .then((response) => response.json())
       .then((bookings) => {
         console.log("Bookings here \n", bookings);
-        // this.getUsers(bookings);
         this.setBookings(bookings, false);
       });
   }
 
-  parseBookings = (bookings) => {
-    return bookings.map((bookingRecord) => ({
-      time: Date.parse(bookingRecord.time),
-      duration: bookingRecord.duration * 60 * 1000, // mins into ms
-      userId: bookingRecord.userId,
-    }));
-  };
-
   setBookings = (bookings, isNew) => {
-    let id = 1;
     const newBookings = bookings.map((booking) => {
       const startDate = new Date(booking.time);
       const endDate = new Date(booking.time + booking.duration);
@@ -46,12 +37,13 @@ class App extends Component {
       });
 
       return {
-        title: `User${booking.userId}`,
+        title: `User${booking.user_id}`,
         start: startDate,
         end: endDate,
-        id: id++,
         overlap: hasOverlap,
         new: isNew,
+        duration: booking.duration,
+        user_id: booking.user_id,
       };
     });
     this.setState(
@@ -67,7 +59,7 @@ class App extends Component {
     }
     console.log(meta);
     console.log(data);
-    const bookings = this.parseBookings(data);
+    const bookings = parseBookings(data);
     console.log(bookings);
     this.setBookings(bookings, true);
   };
@@ -84,8 +76,38 @@ class App extends Component {
   };
 
   onBookingUpdate = () => {
-    console.log("bookings updated")
-  }
+    console.log("bookings updated");
+    // Payload should include bookings that do not overlap
+    const bookingsPayload = this.state.bookings
+      .filter((booking) => {
+        return !booking.overlap && booking.new;
+      })
+      .map((booking) => {
+        return {
+          duration: booking.duration / 60 / 1000, // Convert back to minutes
+          user_id: booking.user_id,
+          time: booking.start.toString(),
+        };
+      });
+
+    console.log(bookingsPayload);
+
+    // Simple POST request with a JSON body using fetch, taken from https://jasonwatmore.com/post/2020/02/01/react-fetch-http-post-request-examples
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingsPayload),
+    };
+    fetch(`${apiUrl}/bookings`, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        this.setState({ bookings: [] });
+        this.setBookings(data, false);
+      })
+      .catch((error) => {
+        alert(`Error processing bookings. Try again later.\n${error}`);
+      });
+  };
 
   customEventPropGetter = (event) => {
     if (event.new && event.overlap) return { className: "rbc-event-overlap" };
@@ -98,12 +120,18 @@ class App extends Component {
       <div className="App">
         <div className="App-header">
           <Dropzone accept=".csv" onDrop={this.onDrop}>
-            Drag files here. 
+            Drag files here.
           </Dropzone>
         </div>
         <div className="App-main">
-          <p>Uploaded bookings will be shown in the calendar. Any new bookings that overlap with old bookings will be shown in red, and will not be saved.</p>
-          <p><b>Existing bookings:</b></p>
+          <p>
+            Uploaded bookings will be shown in the calendar. Any new bookings
+            that overlap with old bookings will be shown in red, and will not be
+            saved.
+          </p>
+          <p>
+            <b>Existing bookings:</b>
+          </p>
           <Calendar
             localizer={localizer}
             events={this.state.bookings}
@@ -111,7 +139,9 @@ class App extends Component {
             defaultDate={startingDate}
             eventPropGetter={this.customEventPropGetter}
           />
-          <button className='booking-button' onClick={this.onBookingUpdate}>UPDATE</button>
+          <button className="booking-button" onClick={this.onBookingUpdate}>
+            UPDATE
+          </button>
         </div>
       </div>
     );
