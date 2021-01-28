@@ -8,20 +8,22 @@ import moment from "moment";
 import "./App.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { parseBookings } from "./util";
+import BookingService from "./BookingService";
 
-const apiUrl = "http://localhost:3004";
 const localizer = momentLocalizer(moment);
 const startingDate = new Date("2018/03/04");
 
 class App extends Component {
   state = { bookings: [] };
 
-  componentWillMount() {
-    fetch(`${apiUrl}/bookings`)
-      .then((response) => response.json())
+  async componentWillMount() {
+    const response = BookingService.getBookings();
+    await response
       .then((bookings) => {
-        console.log("Bookings here \n", bookings);
         this.addBookings(bookings, false);
+      })
+      .catch((error) => {
+        alert(`Error retrieving bookings. Try again later\n${error}`);
       });
   }
 
@@ -80,7 +82,7 @@ class App extends Component {
     });
   };
 
-  onBookingUpdate = () => {
+   onBookingUpdate = async () => {
     // Payload should include bookings that do not overlap and are new
     const bookingsPayload = this.state.bookings
       .filter((booking) => {
@@ -94,22 +96,15 @@ class App extends Component {
         };
       });
 
-    // Simple POST request with a JSON body using fetch, taken from https://jasonwatmore.com/post/2020/02/01/react-fetch-http-post-request-examples
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingsPayload),
-    };
-    fetch(`${apiUrl}/bookings`, requestOptions)
-      .then((response) => response.json())
-      .then((data) => {
-        // Reset bookings to default state before refreshing bookings from server
-        this.setState({ bookings: [] });
-        this.addBookings(data, false);
-      })
-      .catch((error) => {
-        alert(`Error processing bookings. Try again later.\n${error}`);
-      });
+    const response = BookingService.uploadBookings(bookingsPayload);
+    await response.then((data) => {
+      // Reset bookings to default state before refreshing bookings from server
+      this.setState({ bookings: [] });
+      this.addBookings(data, false);
+    })
+    .catch((error) => {
+      alert(`Error processing bookings. Try again later.\n${error}`);
+    });
   };
 
   // Function that takes an event and returns a classname or style that will be applied to the event
